@@ -1,8 +1,230 @@
 <html>
-    <head>
-        <link type="text/css" rel="stylesheet" href="./styles/style.css" />
 
-        <script type="text/javascript" src="./scripts/script.js"></script>
-    </head>
-    <body></body>
+<head>
+    <link type="text/css" rel="stylesheet" href="./styles/style.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://unpkg.com/dayjs@1.8.21/dayjs.min.js"></script>
+</head>
+
+<body>
+    <button onclick="add()">Click Me!</button>
+
+    <div id="graph"></div>
+    <script>
+        let i = 0;
+
+        //get all the elements for login
+        const loginForm = $('#loginForm')
+        google.charts.load('current', { 'packages': ['line'] });
+        //handle on form submit
+        function handleForm(i) {
+
+            const hostingplan = $(`#queueInput${i}`)
+            const usernameInput = $(`#companyInput${i}`)
+
+            const errcomdiv = $(`#errcomdiv${i}`)
+
+            let errcom = $(`<div id="errcompany${i}"></div>`)
+
+            errcomdiv.append(errcom)
+            const payload = {
+                company_id: usernameInput.val(),
+            }
+
+            let serialize = function (obj) {
+                var str = [];
+                for (var p in obj)
+                    if (obj.hasOwnProperty(p)) {
+                        str.push("query[" + encodeURIComponent(p) + "]" + "=" + encodeURIComponent(obj[p]));
+                    }
+                return str.join("&");
+            }
+            let query = serialize(payload)
+            axios.get(`http://localhost:8080/company/queue`, { params: payload })
+                .then(function (res) {
+                    hostingplan.empty()
+
+                    let item = $(`<option selected disabled hidden style='display: none' value=''></option>`)
+                    
+                        hostingplan.append(item)
+
+                    const errcompany = $(`#errcompany${i}`)
+
+                    errcompany.empty()
+
+                    const line_top = $(`#line_top_x${i}`)
+
+                    if (line_top != null) {
+                        line_top.empty()
+                    }
+
+
+                    console.log(res)
+                    if (res.data.length == 0) {
+                        const line_top = $(`#line_top_x${i}`)
+
+                        if (line_top != null) {
+                            line_top.empty()
+                        }
+                        const errcompany = $(`#errcompany${i}`)
+
+                        errcompany.empty()
+
+                        errcompany.append(`<p id="errormsgcom${i}">no company id</p>`)
+
+                    }
+                    else {
+                        console.log(res)
+                        const check = document.getElementById(`checkInactive${i}`)
+
+                        if (check.checked) {
+                            for (let i = 0; i < res.data.length; i++) {
+                                if (res.data[i].is_active == 1) {
+                                    let item = $(`<option value="${res.data[i].queue_id}">${res.data[i].queue_id}</option>`)
+
+                                    hostingplan.append(item)
+                                }
+                            }
+                        } else {
+                            for (let i = 0; i < res.data.length; i++) {
+                                let item = $(`<option value="${res.data[i].queue_id}">${res.data[i].queue_id}</option>`)
+
+                                hostingplan.append(item)
+
+                            }
+                        }
+                    }
+                }).catch(function err(res) {
+
+                    const line_top = $(`#line_top_x${i}`)
+
+                    if (line_top != null) {
+                        line_top.empty()
+                    }
+                    const errcompany = $(`#errcompany${i}`)
+
+                    errcompany.empty()
+
+                    errcompany.append(`<p id="errormsgcom${i}">invalid</p>`)
+                });
+
+        }
+
+        function onInput(i) {
+
+            const now = dayjs().subtract(3, 'minute').toISOString();
+
+
+            const passwordInput = $(`#queueInput${i}`)
+            const userIdText = $(`#userIdText${i}`)
+
+            let item = $(`<div id="line_top_x${i}"></div>`)
+
+            userIdText.append(item)
+            const line_top = $(`#line_top_x${i}`)
+
+            line_top.empty()
+
+            const payload = {
+                queue_id: passwordInput.val(),
+                duration: 3,
+                from: now
+            }
+            let serialize = function (obj) {
+                var str = [];
+                for (var p in obj)
+                    if (obj.hasOwnProperty(p)) {
+                        str.push("query[" + encodeURIComponent(p) + "]" + "=" + encodeURIComponent(obj[p]));
+                    }
+                return str.join("&");
+            }
+            let query = serialize(payload)
+            axios.get(`http://localhost:3000/company/arrival_rate`, { params: payload })
+                .then(function (res) {
+
+
+
+                    function drawChart() {
+
+                        var data = new google.visualization.DataTable();
+                        data.addColumn('string', '');
+                        data.addColumn('number', '');
+
+                        var arr = []
+                        for (let i = 0; i < res.data.length; i++) {
+                            arr.push([dayjs(res.data[i].timestamp).format("hh:mm:ss:SSS"), parseInt(res.data[i].count)])
+                            console.log(dayjs(res.data[i].timestamp).toISOString())
+                        }
+                        data.addRows(
+                            arr
+                        );
+                        var options = {
+                            chart: {
+                            },
+                            width: 500,
+                            height: 500,
+                            axes: {
+                                x: {
+                                    0: { side: 'bottom' }
+                                }
+                            },
+                            legend: {position: 'none'}
+                        };
+                        var chart = new google.charts.Line(document.getElementById(`line_top_x${i}`));
+
+                        chart.draw(data, google.charts.Line.convertOptions(options));
+                    }
+
+
+                    drawChart();
+
+
+                }).catch(error => {
+
+                    const line_top = $(`#line_top_x${i}`)
+
+                    line_top.empty()
+
+                    line_top.append(`<p id="errormsg${i}">error</p>`)
+
+                });
+
+        }
+
+        function add() {
+
+            i++;
+            const graph = $('#graph')
+            let item = $(`
+            <div id="div${i}">
+                <button onclick="remove(${i})">remove</button>
+            <div id="loginForm" action="">
+                <label>Comapany id: </label>
+                <input id="companyInput${i}" type="text" placeholder="1234567890">
+                <button onclick="handleForm(${i})">Search</button>
+                <input type="checkbox" id="checkInactive${i}" checked>
+                <label>Hide Inactive</label><br>
+                <div style="margin-left: 80px;" id="errcomdiv${i}"></div>
+            </div>
+            
+                <label>Queue id: </label>
+                <select id="queueInput${i}" oninput="onInput(${i})" type="text">
+                </select>
+            <div style="margin-left: 80px;" id="userIdText${i}"></div>
+            
+        </div>
+        `)
+            graph.append(item)
+        }
+        function remove(i) {
+            const remdiv = $(`#div${i}`)
+
+            remdiv.remove();
+
+        }
+    </script>
+</body>
+
 </html>
