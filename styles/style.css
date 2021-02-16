@@ -1,20 +1,18 @@
-#div1 {
-    width: 600px;
-    height:600px;
-    border: 1px solid black;
+body {
+    background-color: RGB(245, 132, 39);
+}
+
+#submitBtn {
+    background-color: RGB(245, 132, 39);
+    color: white;
+    border-radius: 12px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
     }
-#div2 {
-    width: 600px;
-    height:600px;
-    border: 1px solid black;
+    100% {
+        transform: rotate(360deg);
     }
-#div3 {
-    width: 600px;
-    height:600px;
-    border: 1px solid black;
-    }
-#queueInput1 {
-    width: 200px;
-    height:20px;
-    border: 1px solid black;
-    }
+}
