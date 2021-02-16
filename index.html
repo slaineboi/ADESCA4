@@ -48,7 +48,7 @@
                 return str.join("&");
             }
             let query = serialize(payload)
-            axios.get(`http://localhost:8080/company/queue`, {
+            axios.get(`https://ades-2b02.herokuapp.com/company/queue`, {
                 params: payload
             })
                 .then(function (res) {
@@ -154,7 +154,7 @@
             }
             let query = serialize(payload)
 
-            axios.get(`http://localhost:3000/company/arrival_rate`, {
+            axios.get(`https://ades-2b02.herokuapp.com/company/arrival_rate`, {
                 params: payload
             })
                 .then(function (res) {
